@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalibIlm - Student Notes, Community Doubt Forum & AI Study Hub</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: 'var(--brand-50, #eef2ff)',
+              100: 'var(--brand-100, #e0e7ff)',
+              500: 'var(--brand-500, #6366f1)',
+              600: 'var(--brand-600, #4f46e5)',
+              700: 'var(--brand-700, #4338ca)',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- React 18 & Babel CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    h1, h2, h3, h4, .font-display { font-family: 'Outfit', sans-serif; }
+    :root {
+      --brand-50: #eef2ff; --brand-100: #e0e7ff;
+      --brand-500: #6366f1; --brand-600: #4f46e5; --brand-700: #4338ca;
+    }
+    [data-accent="emerald"] {
+      --brand-50: #ecfdf5; --brand-100: #d1fae5;
+      --brand-500: #10b981; --brand-600: #059669; --brand-700: #047857;
+    }
+    [data-accent="rose"] {
+      --brand-50: #fff1f2; --brand-100: #ffe4e6;
+      --brand-500: #f43f5e; --brand-600: #e11d48; --brand-700: #be123c;
+    }
+    [data-accent="violet"] {
+      --brand-50: #f5f3ff; --brand-100: #ede9fe;
+      --brand-500: #8b5cf6; --brand-600: #7c3aed; --brand-700: #6d28d9;
+    }
+    [data-accent="cyan"] {
+      --brand-50: #ecfeff; --brand-100: #cffafe;
+      --brand-500: #06b6d4; --brand-600: #0891b2; --brand-700: #0e7490;
+    }
+    [data-accent="amber"] {
+      --brand-50: #fffbeb; --brand-100: #fef3c7;
+      --brand-500: #f59e0b; --brand-600: #d97706; --brand-700: #b45309;
+    }
+    .bg-brand-600 { background-color: var(--brand-600) !important; }
+    .hover\:bg-brand-700:hover { background-color: var(--brand-700) !important; }
+    .text-brand-600 { color: var(--brand-600) !important; }
+    .border-brand-600 { border-color: var(--brand-600) !important; }
+    .bg-brand-50 { background-color: var(--brand-50) !important; }
+    .text-brand-700 { color: var(--brand-700) !important; }
+    
+    /* Hide scrollbars but keep touch scroll smooth */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors pb-20 md:pb-6">
+  <div id="root"></div>
+
+  <!-- React Application -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Web Audio Chime
+    function playNotificationChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch (e) {}
+    }
+
+    // Download document as text
+    function downloadDocument(fileName, title, content) {
+      const fullText = `========================================================\nTALIBILM ACADEMIC LIBRARY\nTitle: ${title}\n========================================================\n\n${content}`;
+      const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName.endsWith('.txt') ? fileName : `${fileName}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Download SVG as PNG image using Canvas
+    function downloadSvgAsPng(svgElementId, filename = 'diagram.png') {
+      const container = document.getElementById(svgElementId);
+      if (!container) return;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      canvas.width = 1600;
+      canvas.height = 960;
+
+      img.onload = () => {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const pngUrl = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngUrl;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      };
+
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    }
+
+    const CLASSES = ['All Classes', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'MDCAT / Pre-Med', 'ECAT / Pre-Eng', 'BS / University'];
+    const SUBJECTS = ['All Subjects', 'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Computer Science', 'English'];
+    const TYPES = ['All Types', 'Notes', 'Book', 'PDF', 'Past Paper', 'Formula Sheet'];
+
+    const INITIAL_MATERIALS = [
+      {
+        id: 'mat-1',
+        title: 'Physics Chapter 3: Motion and Force Comprehensive Notes',
+        description: 'Complete board preparation notes with derivations of equations of motion, momentum, and projectile trajectories.',
+        className: 'Class 11',
+        subject: 'Physics',
+        type: 'Notes',
+        uploaderName: 'Prof. Tariq Mahmood',
+        uploaderCollege: 'Govt. Forman Christian College, Lahore',
+        uploadDate: '2026-02-15',
+        fileSize: '4.2 MB',
+        pageCount: 38,
+        rating: 4.9,
+        totalRatings: 184,
+        downloads: 1420,
+        fileName: 'FSc_Physics_Ch3_Motion_Notes.pdf',
+        sampleContent: '1. Displacement & Velocity\nRate of change of displacement is velocity (v = ds/dt).\n\n2. Newton\'s 2nd Law of Motion:\nRate of change of linear momentum equals applied external force (F = dp/dt = ma).\n\n3. Projectile Motion:\nTwo-dimensional motion under constant gravitational acceleration. Range is maximum at 45 degrees.\n\n4. Equations of Motion:\n- vf = vi + at\n- S = vi*t + 0.5*a*t²\n- 2aS = vf² - vi²',
+        isVerified: true
+      },
+      {
+        id: 'mat-2',
+        title: 'Chemistry Organic Reactions & Mechanisms Summary Sheet',
+        description: 'Benzene electrophilic substitution, IUPAC nomenclature, and Grignard reagent reactions for Board & MDCAT.',
+        className: 'Class 12',
+        subject: 'Chemistry',
+        type: 'Formula Sheet',
+        uploaderName: 'Dr. Ayesha Siddiqa',
+        uploaderCollege: 'Kinnaird College for Women, Lahore',
+        uploadDate: '2026-02-10',
+        fileSize: '2.8 MB',
+        pageCount: 24,
+        rating: 4.8,
+        totalRatings: 96,
+        downloads: 980,
+        fileName: 'Organic_Chemistry_Quick_Map.pdf',
+        sampleContent: 'Benzene Structure:\nHexagonal planar ring with delocalized pi-electrons.\nElectrophilic substitution: Nitration (HNO3 + H2SO4) gives Nitrobenzene.\nResonance energy: 150.5 kJ/mol.',
+        isVerified: true
+      },
+      {
+        id: 'mat-3',
+        title: 'MDCAT Biology High-Yield Question Bank (Solved)',
+        description: 'Cell biology, enzymes, respiration, and nervous coordination MCQs with detailed explanations.',
+        className: 'MDCAT / Pre-Med',
+        subject: 'Biology',
+        type: 'Past Paper',
+        uploaderName: 'Hamza Khan (MDCAT 194/200)',
+        uploaderCollege: 'King Edward Medical University',
+        uploadDate: '2026-01-28',
+        fileSize: '5.1 MB',
+        pageCount: 52,
+        rating: 4.9,
+        totalRatings: 230,
+        downloads: 2150,
+        fileName: 'MDCAT_Biology_Master_MCQs.pdf',
+        sampleContent: 'Cell Biology MCQs:\n1. Mitochondria is the powerhouse of the cell generating ATP via oxidative phosphorylation.\n2. Ribosomes are protein synthesis factories.\n3. Plant cell wall is composed of cellulose fibrils embedded in hemicellulose.',
+        isVerified: true
+      },
+      {
+        id: 'mat-4',
+        title: 'Mathematics Chapter 2: Matrices & Determinants Hand Notes',
+        description: 'Cramer rule, matrix inversion method, echelon form, and rank of matrix with solved exercises.',
+        className: 'Class 11',
+        subject: 'Mathematics',
+        type: 'Notes',
+        uploaderName: 'Sir Rizwan Ahmed',
+        uploaderCollege: 'Punjab College Campus 8',
+        uploadDate: '2026-02-01',
+        fileSize: '3.1 MB',
+        pageCount: 30,
+        rating: 4.7,
+        totalRatings: 74,
+        downloads: 810,
+        fileName: 'FSc_Math_Ch2_Matrices.pdf',
+        sampleContent: '1. Inversion Method: X = A⁻¹ B\n2. Cramer\'s Rule: x = |Ax| / |A|, y = |Ay| / |A|\n3. For non-trivial solution: |A| = 0.',
+        isVerified: true
+      }
+    ];
+
+    const INITIAL_DOUBTS = [
+      {
+        id: 'd-1',
+        title: 'Why is maximum horizontal range achieved at θ = 45° in projectile motion?',
+        details: 'Can someone explain why sin 2θ = 1 when θ = 45 degrees in R = (vi² sin 2θ) / g?',
+        className: 'Class 11',
+        subject: 'Physics',
+        authorName: 'Bilal Ahmad (FSc-I)',
+        createdAt: '2 hours ago',
+        upvotes: 14,
+        isSolved: true,
+        answers: [
+          {
+            id: 'a-1',
+            authorName: 'Prof. Tariq Mahmood',
+            authorRole: 'Peer Tutor',
+            content: 'Horizontal range formula is:\nR = (vi² sin 2θ) / g\nSince maximum value of sin(x) is 1:\nsin(2θ) = 1 => 2θ = 90° => θ = 45°.\nHence launch at 45 degrees produces maximum range.',
+            upvotes: 18,
+            isAccepted: true
+          }
+        ]
+      },
+      {
+        id: 'd-2',
+        title: 'Difference between Mitosis and Meiosis crossing over phase?',
+        details: 'In which stage of Meiosis does crossing over occur and what is chiasma?',
+        className: 'Class 11',
+        subject: 'Biology',
+        authorName: 'Zainab Fatima',
+        createdAt: '5 hours ago',
+        upvotes: 9,
+        isSolved: false,
+        answers: []
+      }
+    ];
+
+    const INITIAL_VIDEOS = [
+      {
+        id: 'vid-1',
+        title: 'Complete Projectile Motion Derivations & Numericals (Class 11)',
+        description: 'Step by step derivation for Time of Flight, Maximum Height, and Horizontal Range.',
+        videoUrl: 'https://www.youtube.com/embed/0hWf2P4Zg6c',
+        duration: '28:45',
+        className: 'Class 11',
+        subject: 'Physics',
+        creatorName: 'Sir Waqas Physics Hub',
+        likes: 312,
+        comments: [
+          { id: 'c-1', authorName: 'Usman Ali', comment: 'Sir range formula crystal clear hogaya! Thank you.' }
+        ]
+      },
+      {
+        id: 'vid-2',
+        title: 'Benzene Structure & Resonance Energy (Class 12 Chemistry)',
+        description: 'Kekule structure, modern orbital treatment, and delocalized electron cloud.',
+        videoUrl: 'https://www.youtube.com/embed/mBcZ1t1g2F8',
+        duration: '22:15',
+        className: 'Class 12',
+        subject: 'Chemistry',
+        creatorName: 'Dr. Ayesha Academy',
+        likes: 245,
+        comments: [
+          { id: 'c-2', authorName: 'Fatima Noor', comment: 'Best explanation of resonance energy!' }
+        ]
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('notes');
+      const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('tb_dark') === 'true');
+      const [accentColor, setAccentColor] = useState(() => localStorage.getItem('tb_accent') || 'indigo');
+      const [fontSize, setFontSize] = useState('normal');
+      const [targetBoard, setTargetBoard] = useState('Punjab Board (BISE)');
+      const [toastMsg, setToastMsg] = useState(null);
+
+      // Filters
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedClass, setSelectedClass] = useState('All Classes');
+      const [selectedSubject, setSelectedSubject] = useState('All Subjects');
+      const [selectedType, setSelectedType] = useState('All Types');
+
+      // Modals
+      const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+      const [isUploadOpen, setIsUploadOpen] = useState(false);
+      const [isAskDoubtOpen, setIsAskDoubtOpen] = useState(false);
+      const [previewMat, setPreviewMat] = useState(null);
+      const [ratingMat, setRatingMat] = useState(null);
+      const [userStars, setUserStars] = useState(5);
+
+      // Data states
+      const [materials, setMaterials] = useState(() => {
+        const s = localStorage.getItem('tb_mat');
+        return s ? JSON.parse(s) : INITIAL_MATERIALS;
+      });
+      const [doubts, setDoubts] = useState(() => {
+        const s = localStorage.getItem('tb_doubts');
+        return s ? JSON.parse(s) : INITIAL_DOUBTS;
+      });
+      const [videos, setVideos] = useState(() => {
+        const s = localStorage.getItem('tb_videos');
+        return s ? JSON.parse(s) : INITIAL_VIDEOS;
+      });
+      const [savedIds, setSavedIds] = useState(['mat-1', 'mat-2']);
+
+      // AI Hub States
+      const [aiMode, setAiMode] = useState('chat');
+      const [aiMessages, setAiMessages] = useState([
+        { id: '1', role: 'assistant', text: 'Assalam-o-Alaikum! Main aapka TalibIlm AI Study Tutor hoon.\n\nAap mujhse:\n- 🫀 Scientific Diagrams (Heart, Plant Cell, Benzene)\n- 📐 Math Derivations & Physics Numericals\n- 📅 30-Day Revision Timetable\n- 📝 Board Model Question Papers\nke bare me kuch bhi pooch sakte hain!' }
+      ]);
+      const [aiInput, setAiInput] = useState('');
+      const [aiLoading, setAiLoading] = useState(false);
+      const [activeDiagramType, setActiveDiagramType] = useState('heart');
+      const [generatedPlan, setGeneratedPlan] = useState(null);
+      const [generatedPaper, setGeneratedPaper] = useState(null);
+
+      // Quiz State
+      const [quizAnswers, setQuizAnswers] = useState({});
+      const [quizChecked, setQuizChecked] = useState(false);
+
+      useEffect(() => {
+        if (isDarkMode) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        localStorage.setItem('tb_dark', isDarkMode);
+      }, [isDarkMode]);
+
+      useEffect(() => {
+        localStorage.setItem('tb_accent', accentColor);
+      }, [accentColor]);
+
+      useEffect(() => {
+        localStorage.setItem('tb_mat', JSON.stringify(materials));
+      }, [materials]);
+
+      useEffect(() => {
+        localStorage.setItem('tb_doubts', JSON.stringify(doubts));
+      }, [doubts]);
+
+      useEffect(() => {
+        localStorage.setItem('tb_videos', JSON.stringify(videos));
+      }, [videos]);
+
+      const showToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 2800);
+      };
+
+      // Filtered Materials
+      const filteredMaterials = materials.filter(m => {
+        const matchClass = selectedClass === 'All Classes' || m.className === selectedClass;
+        const matchSub = selectedSubject === 'All Subjects' || m.subject === selectedSubject;
+        const matchType = selectedType === 'All Types' || m.type === selectedType;
+        const matchSearch = !searchQuery.trim() ||
+          m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          m.description.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchClass && matchSub && matchType && matchSearch;
+      });
+
+      // AI Chat
+      const handleSendAi = (customText) => {
+        const text = customText || aiInput;
+        if (!text.trim() || aiLoading) return;
+        const q = text.toLowerCase();
+        setAiMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', text: text.trim() }]);
+        setAiInput('');
+        setAiLoading(true);
+
+        setTimeout(() => {
+          let botReply = '';
+          if (q.includes('heart') || q.includes('dil')) {
+            botReply = '🫀 **Human Heart (4 Chambers & Flow):**\n1. **Right Atrium:** Vena cava se deoxygenated blood receive karta hai.\n2. **Right Ventricle:** Lungs ki taraf pulmonary artery ke zariye blood pump karta hai.\n3. **Left Atrium:** Lungs se oxygenated blood pulmonary veins ke zariye receive karta hai.\n4. **Left Ventricle:** Aorta ke zariye pure body me oxygenated blood pump karta hai.\n\n*Tip:* Switch to the **🎨 AI Diagrams** tab to view & download the colored diagram as Image!';
+          } else if (q.includes('benzene')) {
+            botReply = '🧪 **Benzene (C6H6) Structure & Stability:**\n- Hexagonal planar ring with bond angle 120°.\n- 6 sp² hybridized carbon atoms.\n- Delocalized π-electron cloud provides resonance stability energy of 150.5 kJ/mol.';
+          } else if (q.includes('quadratic')) {
+            botReply = '📐 **Quadratic Formula:**\nax² + bx + c = 0\n**Formula:** x = (-b ± √(b² - 4ac)) / (2a)\n**Discriminant (D = b² - 4ac):**\n- D > 0: Two real roots\n- D = 0: One real root\n- D < 0: Complex imaginary roots';
+          } else if (q.includes('projectile') || q.includes('45')) {
+            botReply = '🚀 **Projectile Motion Range at 45°:**\nFormula: R = (vi² sin 2θ) / g\nSine function ki maximum possible value 1 hoti hai:\nsin(2θ) = 1 => 2θ = 90° => θ = 45°.\nIs liye 45° angle par maximum horizontal range milti hai!';
+          } else {
+            botReply = '💡 **Board Exam Guidance:**\nIs sawal ko attempt karte waqt main definitions, SI units, aur formula separate lines me likhein. Diagram hamesha sharp lead pencil se ruled paper par banayein!';
+          }
+          setAiMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', text: botReply }]);
+          setAiLoading(false);
+          playNotificationChime();
+        }, 500);
+      };
+
+      // Toggle Bookmark
+      const toggleBookmark = (id) => {
+        setSavedIds(prev => {
+          if (prev.includes(id)) {
+            showToast('Removed from saved bookmarks');
+            return prev.filter(x => x !== id);
+          } else {
+            showToast('Saved to your study library! ❤️');
+            return [...prev, id];
+          }
+        });
+      };
+
+      // Submit Rating
+      const handleSaveRating = (matId) => {
+        setMaterials(prev => prev.map(m => {
+          if (m.id === matId) {
+            const nextTotal = (m.totalRatings || 10) + 1;
+            const nextR = ((m.rating * (nextTotal - 1)) + userStars) / nextTotal;
+            return { ...m, rating: parseFloat(nextR.toFixed(1)), totalRatings: nextTotal };
+          }
+          return m;
+        }));
+        setRatingMat(null);
+        showToast(`Thank you! Your ${userStars}★ rating was recorded.`);
+      };
+
+      return (
+        <div data-accent={accentColor} className={`min-h-screen flex flex-col ${fontSize === 'compact' ? 'text-xs' : fontSize === 'large' ? 'text-base' : 'text-sm'}`}>
+          {/* Toast */}
+          {toastMsg && (
+            <div className="fixed bottom-20 md:bottom-6 right-6 z-50 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-2xl font-semibold border border-white/10 text-xs">
+              {toastMsg}
+            </div>
+          )}
+
+          {/* TOP HEADER */}
+          <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+            <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+              {/* Logo */}
+              <div onClick={() => setActiveTab('notes')} className="flex items-center gap-2.5 cursor-pointer shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">🎓</div>
+                <div>
+                  <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-display">
+                    Talib<span className="text-brand-600">Ilm</span>
+                  </span>
+                  <span className="block text-[10px] text-slate-500 -mt-1 font-medium">Student Study Hub</span>
+                </div>
+              </div>
+
+              {/* Desktop Nav Links */}
+              <nav className="hidden md:flex items-center gap-1.5">
+                {[
+                  { id: 'notes', label: 'Notes & Books', icon: '📚' },
+                  { id: 'forum', label: 'Doubt Forum', icon: '💬' },
+                  { id: 'ai', label: 'AI Study Tutor', icon: '✨' },
+                  { id: 'videos', label: 'Video Lectures', icon: '🎥' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`px-3.5 py-2 rounded-xl font-semibold text-xs transition-colors flex items-center gap-2 ${
+                      activeTab === item.id
+                        ? 'bg-brand-50 text-brand-700 dark:bg-slate-800 dark:text-white'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+
+              {/* Right Utility Buttons */}
+              <div className="flex items-center gap-2">
+                <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                  {isDarkMode ? '☀️' : '🌙'}
+                </button>
+                <button onClick={() => setIsSettingsOpen(true)} className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" title="Settings & Colors">
+                  ⚙️
+                </button>
+                <button onClick={() => setIsUploadOpen(true)} className="px-3.5 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl whitespace-nowrap shadow-sm">
+                  + Upload Notes
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Horizontal Tabs Row (ALWAYS VISIBLE ON PHONE!) */}
+            <div className="flex md:hidden items-center justify-around px-2 py-2 border-t border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 overflow-x-auto no-scrollbar gap-1">
+              {[
+                { id: 'notes', label: 'Notes & Books', icon: '📚' },
+                { id: 'forum', label: 'Doubt Forum', icon: '💬' },
+                { id: 'ai', label: 'AI Tutor', icon: '✨' },
+                { id: 'videos', label: 'Lectures', icon: '🎥' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === item.id
+                      ? 'bg-brand-600 text-white'
+                      : 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800'
+                  }`}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </header>
+
+          {/* MAIN PAGE AREA */}
+          <main className="flex-1 max-w-7xl mx-auto px-4 py-5 w-full">
+            {/* ========================================================= */}
+            {/* TAB 1: NOTES & BOOKS WITH ALL SEARCH & FILTER OPTIONS */}
+            {/* ========================================================= */}
+            {activeTab === 'notes' && (
+              <div>
+                {/* Hero Banner with Quick Filters */}
+                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 text-white mb-6 shadow-xl relative overflow-hidden">
+                  <div className="max-w-3xl relative z-10">
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-indigo-300">
+                      Class 9 to University Hub
+                    </span>
+                    <h1 className="text-2xl sm:text-4xl font-extrabold mt-3 font-display leading-tight">
+                      Padhein, Share Karein, aur Board Topper Banein
+                    </h1>
+                    <p className="text-slate-300 text-xs sm:text-sm mt-2">
+                      Verified notes, formula sheets, aur past papers for Matric, FSc, MDCAT, ECAT.
+                    </p>
+
+                    {/* LIVE SEARCH BAR */}
+                    <div className="mt-5 flex items-center bg-white dark:bg-slate-900 rounded-2xl p-1.5 shadow-lg border border-white/20">
+                      <span className="pl-3 text-slate-400">🔍</span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search notes, chapters, derivations, or past papers..."
+                        className="flex-1 px-3 py-2 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-white focus:outline-none"
+                      />
+                      {searchQuery && (
+                        <button onClick={() => setSearchQuery('')} className="px-2 text-xs text-slate-400 hover:text-slate-600">✕</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* FILTER ROW 1: ACADEMIC CLASSES */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">
+                    <span>Select Academic Level:</span>
+                    <span>{filteredMaterials.length} Resources Found</span>
+                  </div>
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {CLASSES.map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setSelectedClass(c)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
+                          selectedClass === c
+                            ? 'bg-brand-600 text-white shadow-xs'
+                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-brand-600'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* FILTER ROW 2: SUBJECTS & TYPES */}
+                <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  {/* Subject Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    {SUBJECTS.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setSelectedSubject(s)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                          selectedSubject === s
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold'
+                            : 'bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Material Type Dropdown */}
+                  <div className="shrink-0">
+                    <select
+                      value={selectedType}
+                      onChange={e => setSelectedType(e.target.value)}
+                      className="w-full sm:w-auto px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200"
+                    >
+                      {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* NOTES CARDS GRID */}
+                {filteredMaterials.length === 0 ? (
+                  <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+                    <div className="text-3xl mb-2">🔍</div>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white">No Notes Found</h3>
+                    <p className="text-xs text-slate-500 mt-1">Try clearing your search query or selecting "All Classes".</p>
+                    <button
+                      onClick={() => { setSearchQuery(''); setSelectedClass('All Classes'); setSelectedSubject('All Subjects'); }}
+                      className="mt-4 px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-semibold"
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredMaterials.map(mat => (
+                      <div key={mat.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-brand-600 transition-colors">
+                        <div>
+                          <div className="flex items-center justify-between text-xs mb-2">
+                            <span className="px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-slate-800 dark:text-brand-500 font-semibold">
+                              {mat.className} · {mat.subject}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => toggleBookmark(mat.id)}
+                                className={`text-base ${savedIds.includes(mat.id) ? 'text-rose-500' : 'text-slate-300 hover:text-rose-400'}`}
+                                title="Save to bookmarks"
+                              >
+                                {savedIds.includes(mat.id) ? '❤️' : '🤍'}
+                              </button>
+                              <span className="text-amber-500 font-bold">★ {mat.rating}</span>
+                            </div>
+                          </div>
+
+                          <h3 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-base mt-1">
+                            {mat.title}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-3">
+                            {mat.description}
+                          </p>
+
+                          <div className="text-[11px] text-slate-400 mt-3 flex items-center justify-between">
+                            <span>By: {mat.uploaderName}</span>
+                            <span>📥 {mat.downloads}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                          <button
+                            onClick={() => setPreviewMat(mat)}
+                            className="flex-1 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"
+                          >
+                            View Note
+                          </button>
+                          <button
+                            onClick={() => {
+                              downloadDocument(mat.fileName, mat.title, mat.sampleContent);
+                              setMaterials(prev => prev.map(m => m.id === mat.id ? { ...m, downloads: m.downloads + 1 } : m));
+                              showToast(`Downloaded "${mat.title}"!`);
+                            }}
+                            className="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl"
+                          >
+                            Download
+                          </button>
+                          <button
+                            onClick={() => setRatingMat(mat)}
+                            className="p-2 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:text-amber-500"
+                            title="Rate this note"
+                          >
+                            ★
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* TAB 2: DOUBT FORUM */}
+            {/* ========================================================= */}
+            {activeTab === 'forum' && (
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold font-display text-slate-900 dark:text-white">Community Doubt Forum</h2>
+                    <p className="text-xs text-slate-500">Ask academic questions and get answers from topper peers and teachers.</p>
+                  </div>
+                  <button
+                    onClick={() => setIsAskDoubtOpen(true)}
+                    className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold self-start sm:self-auto shadow-sm"
+                  >
+                    + Ask New Doubt
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {doubts.map(d => (
+                    <div key={d.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-brand-600">{d.className} · {d.subject}</span>
+                            {d.isSolved && <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 text-[10px] font-bold">✓ Solved</span>}
+                          </div>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">{d.title}</h3>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">{d.details}</p>
+                          <div className="text-[11px] text-slate-400 mt-2">Asked by {d.authorName} · {d.createdAt}</div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setDoubts(prev => prev.map(item => item.id === d.id ? { ...item, upvotes: item.upvotes + 1 } : item));
+                            showToast('Upvoted doubt!');
+                          }}
+                          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 flex flex-col items-center shrink-0"
+                        >
+                          <span>▲</span>
+                          <span>{d.upvotes}</span>
+                        </button>
+                      </div>
+
+                      {/* Answers Section */}
+                      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                        {d.answers.map(ans => (
+                          <div key={ans.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="font-bold text-brand-600">{ans.authorName} ({ans.authorRole})</span>
+                              {ans.isAccepted && <span className="text-emerald-600 font-bold text-xs">✓ Verified Answer</span>}
+                            </div>
+                            <div className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{ans.content}</div>
+                          </div>
+                        ))}
+
+                        {/* Inline Reply Form */}
+                        <div className="flex gap-2 pt-2">
+                          <input
+                            type="text"
+                            placeholder="Write your answer to help this classmate..."
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && e.target.value.trim()) {
+                                const newAns = {
+                                  id: Date.now().toString(),
+                                  authorName: 'Student Tutor',
+                                  authorRole: 'Peer Tutor',
+                                  content: e.target.value.trim(),
+                                  upvotes: 0,
+                                  isAccepted: false
+                                };
+                                setDoubts(prev => prev.map(item => item.id === d.id ? { ...item, answers: [...item.answers, newAns] } : item));
+                                e.target.value = '';
+                                showToast('Answer posted!');
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* TAB 3: 5-IN-1 AI STUDY TUTOR */}
+            {/* ========================================================= */}
+            {activeTab === 'ai' && (
+              <div>
+                {/* AI Feature Mode Selector Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-6 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+                  {[
+                    { id: 'chat', label: '💬 Study Chat & Solver' },
+                    { id: 'diagram', label: '🎨 AI Diagrams (Image Download)' },
+                    { id: 'quiz', label: '📝 Practice Quiz' },
+                    { id: 'timetable', label: '📅 30-Day Timetable' },
+                    { id: 'paper', label: '📄 Board Model Paper 2026' }
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setAiMode(m.id)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+                        aiMode === m.id
+                          ? 'bg-brand-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* MODE 1: CHAT */}
+                {aiMode === 'chat' && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col h-[560px] shadow-sm">
+                    {/* Quick Ask Chips */}
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex gap-2 overflow-x-auto no-scrollbar text-xs">
+                      <span className="font-bold text-slate-500 shrink-0">Quick Ask:</span>
+                      {[
+                        'Heart diagram & chambers',
+                        'Plant cell structure',
+                        'Benzene ring structure',
+                        'Solve quadratic formula',
+                        'Projectile motion range at 45 degrees'
+                      ].map((q, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleSendAi(q)}
+                          className="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-600 whitespace-nowrap shrink-0"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Messages Scroll Area */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {aiMessages.map(msg => (
+                        <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`p-4 rounded-2xl max-w-2xl text-xs sm:text-sm whitespace-pre-wrap leading-relaxed ${
+                            msg.role === 'user'
+                              ? 'bg-brand-600 text-white'
+                              : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                          }`}>
+                            {msg.text}
+                          </div>
+                        </div>
+                      ))}
+                      {aiLoading && (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs text-slate-500 inline-block">
+                          AI thinking & formulating step-by-step solution...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Input Bar */}
+                    <form onSubmit={e => { e.preventDefault(); handleSendAi(); }} className="p-3 border-t border-slate-200 dark:border-slate-800 flex gap-2">
+                      <input
+                        type="text"
+                        value={aiInput}
+                        onChange={e => setAiInput(e.target.value)}
+                        placeholder="Ask any question, derivation, or formula (e.g. Heart diagram, Bernoulli equation)..."
+                        className="flex-1 px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm focus:outline-none"
+                      />
+                      <button type="submit" className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold">
+                        Ask AI
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* MODE 2: DIAGRAMS (WITH IMAGE DOWNLOAD) */}
+                {aiMode === 'diagram' && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white font-display">AI Scientific Diagrams & Structures</h3>
+                        <p className="text-xs text-slate-500">Board exam standard vector diagrams with clear labeling and image export.</p>
+                      </div>
+                      <button
+                        onClick={() => downloadSvgAsPng('active-diagram-container', `${activeDiagramType}-diagram.png`)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 self-start sm:self-auto"
+                      >
+                        <span>📥</span>
+                        <span>Download as Image (PNG)</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {[
+                        { id: 'heart', label: '🫀 Human Heart on Ruled Paper' },
+                        { id: 'cell', label: '🌿 Plant Cell Ultrastructure' },
+                        { id: 'benzene', label: '🧪 Benzene Aromatic Ring' },
+                        { id: 'projectile', label: '🚀 Projectile Motion Trajectory' }
+                      ].map(d => (
+                        <button
+                          key={d.id}
+                          onClick={() => setActiveDiagramType(d.id)}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                            activeDiagramType === d.id ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div id="active-diagram-container" className="p-4 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden">
+                      {activeDiagramType === 'heart' && (
+                        <svg viewBox="0 0 800 480" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="100%" height="100%" fill="#0f172a" rx="16"/>
+                          <circle cx="400" cy="240" r="150" fill="#1e293b" stroke="#334155" stroke-width="4"/>
+                          <path d="M 330 180 Q 400 130 470 180 Q 490 260 400 340 Q 310 260 330 180 Z" fill="#f43f5e" stroke="#fda4af" stroke-width="5"/>
+                          <path d="M 400 160 L 400 320" stroke="#0f172a" stroke-width="4" stroke-dasharray="6,6"/>
+                          <text x="345" y="220" fill="#ffffff" font-size="14" font-weight="bold">Right Ventricle</text>
+                          <text x="415" y="220" fill="#ffffff" font-size="14" font-weight="bold">Left Ventricle</text>
+                          <text x="345" y="175" fill="#93c5fd" font-size="13">Right Atrium</text>
+                          <text x="415" y="175" fill="#fca5a5" font-size="13">Left Atrium</text>
+                          <text x="400" y="430" fill="#38bdf8" font-size="16" font-weight="bold" text-anchor="middle">Scientific Model: 4 Chambers of Human Heart</text>
+                        </svg>
+                      )}
+
+                      {activeDiagramType === 'cell' && (
+                        <svg viewBox="0 0 800 480" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="100%" height="100%" fill="#0f172a" rx="16"/>
+                          <polygon points="260,110 540,110 620,250 540,390 260,390 180,250" fill="#065f46" stroke="#34d399" stroke-width="6"/>
+                          <ellipse cx="400" cy="250" rx="110" ry="70" fill="#0284c7" opacity="0.7"/>
+                          <text x="400" y="255" fill="#ffffff" font-size="14" text-anchor="middle">Large Central Vacuole</text>
+                          <circle cx="280" cy="210" r="28" fill="#8b5cf6"/>
+                          <text x="280" y="215" fill="#ffffff" font-size="11" text-anchor="middle">Nucleus</text>
+                          <ellipse cx="510" cy="210" rx="25" ry="15" fill="#22c55e"/>
+                          <text x="510" y="215" fill="#ffffff" font-size="10" text-anchor="middle">Chloroplast</text>
+                          <text x="400" y="430" fill="#4ade80" font-size="16" font-weight="bold" text-anchor="middle">Plant Cell Structure (Cell Wall, Vacuole & Chloroplast)</text>
+                        </svg>
+                      )}
+
+                      {activeDiagramType === 'benzene' && (
+                        <svg viewBox="0 0 800 480" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="100%" height="100%" fill="#0f172a" rx="16"/>
+                          <polygon points="400,140 480,190 480,290 400,340 320,290 320,190" fill="none" stroke="#f59e0b" stroke-width="6"/>
+                          <circle cx="400" cy="240" r="45" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8,8"/>
+                          <text x="400" y="245" fill="#ffffff" font-size="14" text-anchor="middle">π-electron cloud</text>
+                          <text x="400" y="430" fill="#fbbf24" font-size="16" font-weight="bold" text-anchor="middle">Benzene Hexagonal Aromatic Ring Structure</text>
+                        </svg>
+                      )}
+
+                      {activeDiagramType === 'projectile' && (
+                        <svg viewBox="0 0 800 480" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="100%" height="100%" fill="#0f172a" rx="16"/>
+                          <line x1="100" y1="380" x2="720" y2="380" stroke="#64748b" stroke-width="3"/>
+                          <line x1="100" y1="380" x2="100" y2="80" stroke="#64748b" stroke-width="3"/>
+                          <path d="M 100 380 Q 400 120 700 380" fill="none" stroke="#38bdf8" stroke-width="5"/>
+                          <line x1="400" y1="380" x2="400" y2="250" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4,4"/>
+                          <text x="400" y="240" fill="#f43f5e" font-size="13" text-anchor="middle">Max Height (H)</text>
+                          <text x="400" y="405" fill="#38bdf8" font-size="13" text-anchor="middle">Range R = (vi² sin 2θ) / g</text>
+                          <text x="400" y="450" fill="#ffffff" font-size="15" font-weight="bold" text-anchor="middle">Projectile Motion: Maximum Horizontal Range at θ = 45°</text>
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* MODE 3: PRACTICE QUIZ */}
+                {aiMode === 'quiz' && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Interactive Board Exam Practice Quiz</h3>
+                    <p className="text-xs text-slate-500 mb-6">Select your answers and click "Check Score".</p>
+
+                    <div className="space-y-6">
+                      {[
+                        { q: '1. What is the angle of projection for maximum horizontal range?', options: ['30°', '45°', '60°', '90°'], correct: 1 },
+                        { q: '2. Which organelle is called the powerhouse of the cell?', options: ['Ribosome', 'Mitochondria', 'Golgi Body', 'Lysosome'], correct: 1 },
+                        { q: '3. What is the resonance energy of benzene?', options: ['120.5 kJ/mol', '150.5 kJ/mol', '180.2 kJ/mol', '210.0 kJ/mol'], correct: 1 },
+                        { q: '4. Work done by a centripetal force is always:', options: ['Positive', 'Negative', 'Zero', 'Infinite'], correct: 2 }
+                      ].map((item, idx) => (
+                        <div key={idx} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white mb-3">{item.q}</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {item.options.map((opt, oIdx) => (
+                              <button
+                                key={oIdx}
+                                onClick={() => setQuizAnswers(prev => ({ ...prev, [idx]: oIdx }))}
+                                className={`p-2.5 rounded-lg text-xs text-left border transition-all ${
+                                  quizAnswers[idx] === oIdx
+                                    ? quizChecked
+                                      ? oIdx === item.correct ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-rose-50 border-rose-500 text-rose-800 font-bold'
+                                      : 'bg-brand-50 border-brand-600 text-brand-700 font-bold'
+                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex justify-end gap-3 pt-3">
+                        <button
+                          onClick={() => { setQuizChecked(true); playNotificationChime(); showToast('Quiz evaluated!'); }}
+                          className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold"
+                        >
+                          Check My Answers
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODE 4: TIMETABLE PLANNER */}
+                {aiMode === 'timetable' && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">30-Day Exam Revision Timetable Planner</h3>
+                    <p className="text-xs text-slate-500 mb-4">Board exam target score ke mutabiq 4-phase timetable.</p>
+                    <button
+                      onClick={() => {
+                        setGeneratedPlan(`🎯 30-DAY MASTER REVISION TIMETABLE & ROUTINE
+Target: A+ Grade Topper (${targetBoard})
+
+📅 Phase 1 (Days 1-10): Fundamental Theory & Concept Mastery
+• Daily 6:00 AM - 8:00 AM: Memorize definitions, SI units, and laws.
+• Daily 4:00 PM - 6:00 PM: Step-by-step textbook derivations.
+
+📅 Phase 2 (Days 11-20): High-Yield Numericals & Diagrams
+• Daily 8:00 PM - 10:30 PM: Solve past 5 years board numerical problems.
+• Practice scientific diagrams on unruled and ruled notebook sheets.
+
+📅 Phase 3 (Days 21-27): Board Past Papers & Time Management
+• Solve 3 full-length 2 hour 45 min timed board papers.
+
+📅 Phase 4 (Days 28-30): Golden Formula Sheet & Final Glance
+• Revise one-page summary sheets and rest well before exam day.`);
+                        showToast('Timetable Generated!');
+                      }}
+                      className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold"
+                    >
+                      Generate 30-Day Master Timetable
+                    </button>
+                    {generatedPlan && (
+                      <div className="mt-5 p-5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed text-slate-800 dark:text-slate-200">
+                        {generatedPlan}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* MODE 5: BOARD MODEL PAPER */}
+                {aiMode === 'paper' && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Board Pattern Model Question Paper 2026</h3>
+                    <p className="text-xs text-slate-500 mb-4">Section A (MCQs), Section B (Short Qs), and Section C (Long Qs) with chief examiner marking advice.</p>
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        onClick={() => {
+                          setGeneratedPaper(`=============================================================
+BOARD MODEL EXAMINATION PAPER 2026
+Subject: Physics / Science  |  Target: ${targetBoard}
+Time: 2 Hours 45 Mins       |  Total Marks: 85
+=============================================================
+
+SECTION A: OBJECTIVE MCQs (12 Marks)
+1. The dimension of work is:
+   (A) [MLT⁻¹]    (B) [ML²T⁻²]    (C) [ML²T⁻¹]    (D) [M²LT⁻²]   [Ans: B]
+2. The angle at which horizontal range of projectile is maximum:
+   (A) 30°        (B) 45°         (C) 60°         (D) 90°        [Ans: B]
+3. When body moves in a circular path, work done by centripetal force is:
+   (A) Zero       (B) Positive    (C) Negative    (D) Maximum    [Ans: A]
+
+SECTION B: SHORT QUESTIONS (Attempt any 8 - 44 Marks)
+Q1. State Work-Energy Principle and write its mathematical equation.
+Q2. Why is maximum horizontal range achieved at 45 degrees?
+Q3. State the law of conservation of momentum with an example.
+Q4. Differentiate between elastic and inelastic collision.
+Q5. Derive formula for height of a projectile.
+
+SECTION C: EXTENSIVE QUESTIONS (Attempt any 2 - 24 Marks)
+Q6 (a) State and prove Bernoulli's theorem for fluid flow. (5 Marks)
+Q6 (b) A car moves with 20 m/s and stops in 4 seconds. Calculate distance. (3 Marks)
+
+💡 CHIEF EXAMINER MARKING TIPS:
+• Always draw neat diagrams using pencil with clear labels.
+• Mention SI units in the final numerical line to avoid losing 0.5 mark.`);
+                          showToast('Model Paper Generated!');
+                        }}
+                        className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold"
+                      >
+                        Generate Board Paper
+                      </button>
+                      {generatedPaper && (
+                        <button onClick={() => window.print()} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl text-xs font-semibold">
+                          Print Paper
+                        </button>
+                      )}
+                    </div>
+
+                    {generatedPaper && (
+                      <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-mono whitespace-pre-wrap leading-relaxed text-slate-800 dark:text-slate-200">
+                        {generatedPaper}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* TAB 4: PLAYABLE VIDEO LECTURES */}
+            {/* ========================================================= */}
+            {activeTab === 'videos' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold font-display text-slate-900 dark:text-white">Video Lectures Hub</h2>
+                    <p className="text-xs text-slate-500">Playable lectures by verified teachers with comments and likes.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {videos.map(v => (
+                    <div key={v.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                      <div className="aspect-video w-full bg-black">
+                        <iframe src={v.videoUrl} title={v.title} className="w-full h-full border-0" allowFullScreen />
+                      </div>
+                      <div className="p-5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                            <span>{v.className} · {v.subject}</span>
+                            <span>⏱ {v.duration}</span>
+                          </div>
+                          <h3 className="font-bold text-slate-900 dark:text-white text-base line-clamp-1">{v.title}</h3>
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">{v.description}</p>
+                          <div className="text-[11px] text-brand-600 mt-2 font-medium">Lecturer: {v.creatorName}</div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                          <button
+                            onClick={() => {
+                              setVideos(prev => prev.map(item => item.id === v.id ? { ...item, likes: item.likes + 1 } : item));
+                              showToast('Liked video!');
+                            }}
+                            className="text-slate-600 dark:text-slate-300 font-semibold hover:text-brand-600"
+                          >
+                            ❤️ {v.likes} Likes
+                          </button>
+                          <button
+                            onClick={() => {
+                              const c = prompt('Add comment:');
+                              if (c) {
+                                setVideos(prev => prev.map(item => item.id === v.id ? {
+                                  ...item,
+                                  comments: [{ id: Date.now().toString(), authorName: 'Student', comment: c }, ...item.comments]
+                                } : item));
+                                showToast('Comment posted!');
+                              }
+                            }}
+                            className="text-slate-600 dark:text-slate-300 font-semibold hover:text-brand-600"
+                          >
+                            💬 {v.comments.length} Comments
+                          </button>
+                          <button
+                            onClick={() => showToast(`Link copied for "${v.title}"!`)}
+                            className="text-slate-600 dark:text-slate-300 font-semibold hover:text-brand-600"
+                          >
+                            🔗 Share
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* ========================================================= */}
+          {/* MOBILE BOTTOM NAVIGATION DOCK (ALWAYS ACCESSIBLE!) */}
+          {/* ========================================================= */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-3 py-2 flex items-center justify-around shadow-2xl">
+            {[
+              { id: 'notes', label: 'Notes', icon: '📚' },
+              { id: 'forum', label: 'Doubts', icon: '💬' },
+              { id: 'ai', label: 'AI Tutor', icon: '✨' },
+              { id: 'videos', label: 'Videos', icon: '🎥' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all ${
+                  activeTab === tab.id ? 'text-brand-600 font-bold scale-105' : 'text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                <span className="text-base">{tab.icon}</span>
+                <span className="text-[10px] mt-0.5">{tab.label}</span>
+              </button>
+            ))}
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex flex-col items-center py-1 px-3 rounded-xl text-slate-500 dark:text-slate-400"
+            >
+              <span className="text-base">⚙️</span>
+              <span className="text-[10px] mt-0.5">Settings</span>
+            </button>
+          </div>
+
+          {/* ========================================================= */}
+          {/* SETTINGS MODAL */}
+          {/* ========================================================= */}
+          {isSettingsOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Website Settings & Colors</h3>
+                  <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                <div className="py-4 space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 block mb-2">Display Theme</label>
+                    <div className="flex gap-2">
+                      <button onClick={() => setIsDarkMode(false)} className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${!isDarkMode ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 dark:border-slate-800'}`}>Light</button>
+                      <button onClick={() => setIsDarkMode(true)} className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${isDarkMode ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 dark:border-slate-800'}`}>Dark</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 block mb-2">Accent Color Palette</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'indigo', name: 'Indigo' },
+                        { id: 'emerald', name: 'Emerald' },
+                        { id: 'rose', name: 'Rose' },
+                        { id: 'violet', name: 'Violet' },
+                        { id: 'cyan', name: 'Cyan' },
+                        { id: 'amber', name: 'Amber' }
+                      ].map(c => (
+                        <button
+                          key={c.id}
+                          onClick={() => { setAccentColor(c.id); showToast(`Accent changed to ${c.name}!`); }}
+                          className={`p-2.5 rounded-xl border text-xs font-semibold ${accentColor === c.id ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 dark:border-slate-800'}`}
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 block mb-2">Target Board Examination</label>
+                    <select
+                      value={targetBoard}
+                      onChange={e => setTargetBoard(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs"
+                    >
+                      <option>Punjab Board (BISE)</option>
+                      <option>Federal Board (FBISE)</option>
+                      <option>Sindh Board (BIEK)</option>
+                      <option>KPK Board</option>
+                      <option>Cambridge (O/A Level)</option>
+                      <option>MDCAT / PMC Scheme</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                  <button onClick={() => setIsSettingsOpen(false)} className="px-5 py-2 bg-brand-600 text-white rounded-xl text-xs font-semibold">
+                    Apply & Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* VIEW NOTE PREVIEW MODAL */}
+          {/* ========================================================= */}
+          {previewMat && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col p-6 shadow-2xl">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold text-brand-600">{previewMat.className} · {previewMat.subject}</span>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white mt-0.5">{previewMat.title}</h3>
+                  </div>
+                  <button onClick={() => setPreviewMat(null)} className="text-slate-400 hover:text-slate-600 text-base">✕</button>
+                </div>
+                <div className="flex-1 overflow-y-auto py-4 text-xs sm:text-sm font-mono whitespace-pre-wrap text-slate-800 dark:text-slate-200 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl mt-3">
+                  {previewMat.sampleContent}
+                </div>
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setActiveTab('ai');
+                      setPreviewMat(null);
+                      handleSendAi(`Please give me executive summary and formulas for "${previewMat.title}"`);
+                    }}
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl"
+                  >
+                    Ask AI About This
+                  </button>
+                  <button
+                    onClick={() => {
+                      downloadDocument(previewMat.fileName, previewMat.title, previewMat.sampleContent);
+                      showToast('Downloaded document!');
+                    }}
+                    className="px-4 py-2 bg-brand-600 text-white text-xs font-semibold rounded-xl"
+                  >
+                    Download Note
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* UPLOAD NOTES MODAL */}
+          {/* ========================================================= */}
+          {isUploadOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Upload Study Material</h3>
+                  <button onClick={() => setIsUploadOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    const form = e.target;
+                    const newMat = {
+                      id: Date.now().toString(),
+                      title: form.title.value,
+                      description: form.desc.value,
+                      className: form.className.value,
+                      subject: form.subject.value,
+                      type: 'Notes',
+                      uploaderName: 'Student Contributor',
+                      rating: 5.0,
+                      downloads: 0,
+                      fileName: `${form.title.value.replace(/\s+/g, '_')}.pdf`,
+                      sampleContent: form.content.value || 'Uploaded student notes and handwritten derivations.',
+                      isVerified: false
+                    };
+                    setMaterials(prev => [newMat, ...prev]);
+                    setIsUploadOpen(false);
+                    showToast('Material published to repository!');
+                  }}
+                  className="py-4 space-y-3"
+                >
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Document Title</label>
+                    <input name="title" required placeholder="e.g. Physics Work and Energy Notes" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Class</label>
+                      <select name="className" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1">
+                        {CLASSES.filter(c => c !== 'All Classes').map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Subject</label>
+                      <select name="subject" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1">
+                        {SUBJECTS.filter(s => s !== 'All Subjects').map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Short Description</label>
+                    <input name="desc" placeholder="Chapter summary, derivations, formula sheet" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Content / Key Notes</label>
+                    <textarea name="content" rows={3} placeholder="Paste derivations or summary text..." className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1" />
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button type="submit" className="px-5 py-2 bg-brand-600 text-white rounded-xl text-xs font-semibold">
+                      Publish Notes
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* ASK NEW DOUBT MODAL */}
+          {/* ========================================================= */}
+          {isAskDoubtOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white">Ask Question in Forum</h3>
+                  <button onClick={() => setIsAskDoubtOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    const form = e.target;
+                    const newD = {
+                      id: Date.now().toString(),
+                      title: form.title.value,
+                      details: form.details.value,
+                      className: form.className.value,
+                      subject: form.subject.value,
+                      authorName: 'Student',
+                      createdAt: 'Just now',
+                      upvotes: 1,
+                      isSolved: false,
+                      answers: []
+                    };
+                    setDoubts(prev => [newD, ...prev]);
+                    setIsAskDoubtOpen(false);
+                    showToast('Your question was posted to the forum!');
+                  }}
+                  className="py-4 space-y-3"
+                >
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Question Title</label>
+                    <input name="title" required placeholder="e.g. Why is centripetal acceleration directed towards center?" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Class</label>
+                      <select name="className" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1">
+                        {CLASSES.filter(c => c !== 'All Classes').map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Subject</label>
+                      <select name="subject" className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1">
+                        {SUBJECTS.filter(s => s !== 'All Subjects').map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Details / What have you tried?</label>
+                    <textarea name="details" rows={3} required placeholder="Provide context about what step you are stuck on..." className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs mt-1" />
+                  </div>
+                  <div className="pt-2 flex justify-end">
+                    <button type="submit" className="px-5 py-2 bg-brand-600 text-white rounded-xl text-xs font-semibold">
+                      Post Question
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* STAR RATING MODAL */}
+          {/* ========================================================= */}
+          {ratingMat && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+                <h3 className="font-bold text-base text-slate-900 dark:text-white">Rate Note</h3>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-1">{ratingMat.title}</p>
+
+                <div className="flex justify-center gap-2 my-5 text-3xl">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      onClick={() => setUserStars(star)}
+                      className={`transition-transform hover:scale-125 ${userStars >= star ? 'text-amber-400' : 'text-slate-300 dark:text-slate-700'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex justify-center gap-2">
+                  <button onClick={() => setRatingMat(null)} className="px-4 py-2 border rounded-xl text-xs font-semibold">Cancel</button>
+                  <button onClick={() => handleSaveRating(ratingMat.id)} className="px-5 py-2 bg-brand-600 text-white rounded-xl text-xs font-semibold">Submit Rating</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

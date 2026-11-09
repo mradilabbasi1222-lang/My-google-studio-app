@@ -1,0 +1,6 @@
+{
+  "name": "TalibIlm - Student Notes, Community Doubt Forum & AI Study Hub",
+  "description": "Comprehensive academic platform for students to upload, browse, and download class notes, PDFs, and books by subject; discuss and resolve doubts with peer voting; and get 24/7 AI-powered study assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
